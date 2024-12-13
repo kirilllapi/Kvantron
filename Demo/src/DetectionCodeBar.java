@@ -32,15 +32,12 @@ class DetectionCodeBar {
                 // Преобразование Mat в BufferedImage
                 BufferedImage image = matToBufferedImage(frame);
 
-
                 LuminanceSource source = new BufferedImageLuminanceSource(image);
                 BinaryBitmap bitmap = new BinaryBitmap(new HybridBinarizer(source));
                 Result result = new MultiFormatReader().decode(bitmap);
                 System.out.println("Текст штрих-кода: " + result.getText());
 
                 printContours(result, frame);
-
-
 
             } catch (NotFoundException _) {
             } catch (IOException e) {

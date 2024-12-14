@@ -120,7 +120,44 @@ LuminanceSource source = new BufferedImageLuminanceSource(image);
 Внутри **HybridBinarizer**:
 - ```calculateBlackPoints``` - рассчитывает средний порог яркости для каждого блока (ядра).
 - ```thresholdBlock``` - пременяет пороговую яркость, для пикселей меньше порога присваивается черный цвет (0), а для больших белый (1). Можно сказать, производится пороговая сегментация штрихкода от фона.
+```java
+public BinaryBitmap crop(int left, int top, int width, int height) {
+    LuminanceSource newSource = binarizer.getLuminanceSource().crop(left, top, width, height);
+    return new BinaryBitmap(binarizer.createBinarizer(newSource));
+  }
 
+  /**
+   * @return Whether this bitmap supports counter-clockwise rotation.
+   */
+  public boolean isRotateSupported() {
+    return binarizer.getLuminanceSource().isRotateSupported();
+  }
+
+  /**
+   * Returns a new object with rotated image data by 90 degrees counterclockwise.
+   * Only callable if {@link #isRotateSupported()} is true.
+   *
+   * @return A rotated version of this object.
+   */
+  public BinaryBitmap rotateCounterClockwise() {
+    LuminanceSource newSource = binarizer.getLuminanceSource().rotateCounterClockwise();
+    return new BinaryBitmap(binarizer.createBinarizer(newSource));
+  }
+
+  /**
+   * Returns a new object with rotated image data by 45 degrees counterclockwise.
+   * Only callable if {@link #isRotateSupported()} is true.
+   *
+   * @return A rotated version of this object.
+   */
+  public BinaryBitmap rotateCounterClockwise45() {
+    LuminanceSource newSource = binarizer.getLuminanceSource().rotateCounterClockwise45();
+    return new BinaryBitmap(binarizer.createBinarizer(newSource));
+  }
+```
+- ```isRotateSupported()``` - проверяет на возможность переворота изображения.
+- ```rotateCounterClockwise()``` поворачивает изображение на 90 градусов против часовой стрелки. Если исходное изображение имеет определенную ориентацию, то оно будет перевернуто на 90 градусов влево. Возвращает новый объект ```BinaryBitmap```, который содержит повернутое изображение.
+- ```rotateCounterClockwise45()``` поворачивает изображение на 45 градусов против часовой стрелки. Также возвращает перевернутое изображение в ```BinaryBitmap```
 3. *```MultiFormatReader```* - декодер для всех видов штрихкодов, в который передается полученное бинарное изображение
  ```java
  Result result = new MultiFormatReader().decode(bitmap);

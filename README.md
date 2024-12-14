@@ -408,7 +408,7 @@ public final class MultiFormatReader implements Reader {
   }
 ```
 ![image](https://github.com/user-attachments/assets/58ba3dbf-11c6-4c8c-813f-da213598aed8) ![image](https://github.com/user-attachments/assets/b13fe528-9477-44e9-b2e0-2ca56a3a82bb)
-- В данном случае, если мы рассматриваем данные штрихкоды, то декодером будет являться ```MultiFormatOneDReader()``` 
+- В данном случае, если мы рассматриваем данные штрихкоды, то декодер будет определен в классе ```MultiFormatOneDReader()``` для соответстующего вида штрихкода.
 ```java
  // At end in "try harder" mode
       if (addOneDReader && tryHarder) {
@@ -1046,15 +1046,15 @@ public final class Code93Reader extends OneDReader {
   }
 }
 ```
-- ```findAsteriskPattern```: Поиск начального символа * с использованием массива счетчиков полос.
+- ```findAsteriskPattern``` - поиск начального символа * с использованием массива счетчиков полос.
 
-- ```toPattern```: Преобразует массив полос (широкие и узкие) в числовой шаблон.
+- ```toPattern``` - преобразует массив полос (широкие и узкие) в числовой шаблон.
 
-- ```patternToChar```: Находит соответствующий символ в массиве CHARACTER_ENCODINGS.
+- ```patternToChar``` - находит соответствующий символ в массиве CHARACTER_ENCODINGS.
 
-- ```checkChecksums```: Проверяет две контрольные суммы (C и K).
+- ```checkChecksums``` - проверяет две контрольные суммы (C и K).
 
-- ```decodeExtended```: Обрабатывает управляющие символы для расширенного набора символов.
+- ```decodeExtended``` - обрабатывает управляющие символы для расширенного набора символов.
 
 ### Описание reader'а для CodaBar  ```CodaBarReader```:
 ```java
@@ -1366,12 +1366,12 @@ public final class CodaBarReader extends OneDReader {
   }
 }
 ```
-- ```decodeRow``` - Распознает строку штрихкода из массива битов BitArray.
-- ```validatePattern``` - Проверяет, что все элементы штрихкода соответствуют допустимым размерам полос (узких и широких) на основе заданных порогов.
-- ```setCounters``` - Записывает длины всех чередующихся черных и белых сегментов в массив counters.
-- ```counterAppend``` - Добавляет очередной элемент в массив counters, при необходимости увеличивая его размер/
-- ```findStartPattern``` - Находит и возвращает позицию первого символа начала штрихкода, проверяя его соответствие допустимым шаблонам.
-- ```toNarrowWidePattern``` - Преобразует текущий участок массива счетчиков в числовой шаблон, определяя узкие и широкие полосы.
+- ```decodeRow``` - распознает строку штрихкода из массива битов BitArray.
+- ```validatePattern``` - проверяет, что все элементы штрихкода соответствуют допустимым размерам полос (узких и широких) на основе заданных порогов.
+- ```setCounters``` - записывает длины всех чередующихся черных и белых сегментов в массив counters.
+- ```counterAppend``` - добавляет очередной элемент в массив counters, при необходимости увеличивая его размер/
+- ```findStartPattern``` - находит и возвращает позицию первого символа начала штрихкода, проверяя его соответствие допустимым шаблонам.
+- ```toNarrowWidePattern``` - преобразует текущий участок массива счетчиков в числовой шаблон, определяя узкие и широкие полосы.
 
 # Reader для QR-кода, использующийся в классе ```MultiFormatReader```:
 ```java
@@ -1555,7 +1555,7 @@ public class QRCodeReader implements Reader {
 
 }
 ```
-- ```decode(BinaryBitmap image, Map<DecodeHintType,?> hints)``` - Если в hints указан флаг ```PURE_BARCODE```, вызывает метод extractPureBits для обработки чистых изображений.
+- ```decode(BinaryBitmap image, Map<DecodeHintType,?> hints)``` - если в hints указан флаг ```PURE_BARCODE```, вызывается метод ```extractPureBits``` для обработки чистых изображений.
 В противном случае используется ```Detector``` для поиска QR-кода в изображении, который анализирует изображение, находит координаты QR-кода, искажения, углы и выравнивает его.
 
 ```java
@@ -1975,5 +1975,5 @@ public class Detector {
 }
 
 ```
-- ```Detector``` ищет Alignment Pattern, который помогает выровнять QR-код, особенно если он искажён или имеет перспективные искажения.
-- ```createTransform``` использует PerspectiveTransform.quadrilateralToQuadrilateral, чтобы выровнять QR-код, независимо от его ориентации или искажений.
+- ```Detector``` - ищет Alignment Pattern, который помогает выровнять QR-код, особенно если он искажён или имеет перспективные искажения.
+- ```createTransform``` - использует PerspectiveTransform.quadrilateralToQuadrilateral, чтобы выровнять QR-код, независимо от его ориентации или искажений.

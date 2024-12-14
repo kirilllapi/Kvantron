@@ -159,7 +159,7 @@ public BinaryBitmap crop(int left, int top, int width, int height) {
 - ```isRotateSupported()``` - проверяет на возможность переворота изображения.
 - ```rotateCounterClockwise()``` поворачивает изображение на 90 градусов против часовой стрелки. Если исходное изображение имеет определенную ориентацию, то оно будет перевернуто на 90 градусов влево. Возвращает новый объект ```BinaryBitmap```, который содержит повернутое изображение.
 - ```rotateCounterClockwise45()``` поворачивает изображение на 45 градусов против часовой стрелки. Также возвращает перевернутое изображение в ```BinaryBitmap```
-3. *```MultiFormatReader```* - декодер для всех видов штрихкодов, в который передается полученное бинарное изображение
+3. *```MultiFormatReader```* - декодер для всех видов штрихкодов, в который передается полученное бинарное изображение..
  ```java
  Result result = new MultiFormatReader().decode(bitmap);
 ```
@@ -468,7 +468,7 @@ public final class MultiFormatReader implements Reader {
   }
 ```
 По факту является тем же самым что и класс, только для 1D штрихкодов``` MultiFormatReader```
-# Для каждого 1D штрихкода прописан свой reader:
+# Для каждого 1D штрихкода прописан свой декодер (reader):
 ### Описание reader'а для CODE 39 ```Code39Reader```:
 ```java
 public final class Code39Reader extends OneDReader {

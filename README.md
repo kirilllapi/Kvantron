@@ -165,6 +165,179 @@ public BinaryBitmap crop(int left, int top, int width, int height) {
 ```
 ### Описание класса ```MultiFormatReader```:
 ```java
+public final class MultiFormatReader implements Reader {
+
+  private static final Reader[] EMPTY_READER_ARRAY = new Reader[0];
+
+  private Map<DecodeHintType,?> hints;
+  private Reader[] readers;
+
+  /**
+   * This version of decode honors the intent of Reader.decode(BinaryBitmap) in that it
+   * passes null as a hint to the decoders. However, that makes it inefficient to call repeatedly.
+   * Use setHints() followed by decodeWithState() for continuous scan applications.
+   *
+   * @param image The pixel data to decode
+   * @return The contents of the image
+   * @throws NotFoundException Any errors which occurred
+   */
+  @Override
+  public Result decode(BinaryBitmap image) throws NotFoundException {
+    setHints(null);
+    return decodeInternal(image);
+  }
+
+  /**
+   * Decode an image using the hints provided. Does not honor existing state.
+   *
+   * @param image The pixel data to decode
+   * @param hints The hints to use, clearing the previous state.
+   * @return The contents of the image
+   * @throws NotFoundException Any errors which occurred
+   */
+  @Override
+  public Result decode(BinaryBitmap image, Map<DecodeHintType,?> hints) throws NotFoundException {
+    setHints(hints);
+    return decodeInternal(image);
+  }
+
+  /**
+   * Decode an image using the state set up by calling setHints() previously. Continuous scan
+   * clients will get a <b>large</b> speed increase by using this instead of decode().
+   *
+   * @param image The pixel data to decode
+   * @return The contents of the image
+   * @throws NotFoundException Any errors which occurred
+   */
+  public Result decodeWithState(BinaryBitmap image) throws NotFoundException {
+    // Make sure to set up the default state so we don't crash
+    if (readers == null) {
+      setHints(null);
+    }
+    return decodeInternal(image);
+  }
+
+  /**
+   * This method adds state to the MultiFormatReader. By setting the hints once, subsequent calls
+   * to decodeWithState(image) can reuse the same set of readers without reallocating memory. This
+   * is important for performance in continuous scan clients.
+   *
+   * @param hints The set of hints to use for subsequent calls to decode(image)
+   */
+  public void setHints(Map<DecodeHintType,?> hints) {
+    this.hints = hints;
+
+    boolean tryHarder = hints != null && hints.containsKey(DecodeHintType.TRY_HARDER);
+    @SuppressWarnings("unchecked")
+    Collection<BarcodeFormat> formats =
+        hints == null ? null : (Collection<BarcodeFormat>) hints.get(DecodeHintType.POSSIBLE_FORMATS);
+    Collection<Reader> readers = new ArrayList<>();
+    if (formats != null) {
+      boolean addOneDReader =
+          formats.contains(BarcodeFormat.UPC_A) ||
+          formats.contains(BarcodeFormat.UPC_E) ||
+          formats.contains(BarcodeFormat.EAN_13) ||
+          formats.contains(BarcodeFormat.EAN_8) ||
+          formats.contains(BarcodeFormat.CODABAR) ||
+          formats.contains(BarcodeFormat.CODE_39) ||
+          formats.contains(BarcodeFormat.CODE_93) ||
+          formats.contains(BarcodeFormat.CODE_128) ||
+          formats.contains(BarcodeFormat.ITF) ||
+          formats.contains(BarcodeFormat.RSS_14) ||
+          formats.contains(BarcodeFormat.RSS_EXPANDED);
+      // Put 1D readers upfront in "normal" mode
+      if (addOneDReader && !tryHarder) {
+        readers.add(new MultiFormatOneDReader(hints));
+      }
+      if (formats.contains(BarcodeFormat.QR_CODE)) {
+        readers.add(new QRCodeReader());
+      }
+      if (formats.contains(BarcodeFormat.DATA_MATRIX)) {
+        readers.add(new DataMatrixReader());
+      }
+      if (formats.contains(BarcodeFormat.AZTEC)) {
+        readers.add(new AztecReader());
+      }
+      if (formats.contains(BarcodeFormat.PDF_417)) {
+        readers.add(new PDF417Reader());
+      }
+      if (formats.contains(BarcodeFormat.MAXICODE)) {
+        readers.add(new MaxiCodeReader());
+      }
+      // At end in "try harder" mode
+      if (addOneDReader && tryHarder) {
+        readers.add(new MultiFormatOneDReader(hints));
+      }
+    }
+    if (readers.isEmpty()) {
+      if (!tryHarder) {
+        readers.add(new MultiFormatOneDReader(hints));
+      }
+
+      readers.add(new QRCodeReader());
+      readers.add(new DataMatrixReader());
+      readers.add(new AztecReader());
+      readers.add(new PDF417Reader());
+      readers.add(new MaxiCodeReader());
+
+      if (tryHarder) {
+        readers.add(new MultiFormatOneDReader(hints));
+      }
+    }
+    this.readers = readers.toArray(EMPTY_READER_ARRAY);
+  }
+
+  @Override
+  public void reset() {
+    if (readers != null) {
+      for (Reader reader : readers) {
+        reader.reset();
+      }
+    }
+  }
+
+  private Result decodeInternal(BinaryBitmap image) throws NotFoundException {
+    if (readers != null) {
+      for (Reader reader : readers) {
+        if (Thread.currentThread().isInterrupted()) {
+          throw NotFoundException.getNotFoundInstance();
+        }
+        try {
+          return reader.decode(image, hints);
+        } catch (ReaderException re) {
+          // continue
+        }
+      }
+      if (hints != null && hints.containsKey(DecodeHintType.ALSO_INVERTED)) {
+        // Calling all readers again with inverted image
+        image.getBlackMatrix().flip();
+        for (Reader reader : readers) {
+          if (Thread.currentThread().isInterrupted()) {
+            throw NotFoundException.getNotFoundInstance();
+          }
+          try {
+            return reader.decode(image, hints);
+          } catch (ReaderException re) {
+            // continue
+          }
+        }
+      }
+    }
+    throw NotFoundException.getNotFoundInstance();
+  }
+
+}
+
+```
+- ```decode(BinaryBitmap image)``` - не принимает hint'ы для декодирования изображения и выполняет декодирование с помощью всех декодеров, настроенных по умолчанию.
+- ```decodeWithState(BinaryBitmap image)``` - метод используется для избежания повторной инициализации декодеров каждый раз, когда вызывается метод декодирования.
+- ```decode(BinaryBitmap image, Map<DecodeHintType,?> hints)``` - принимает hint'ы для определения соответствующего декодера.
+- ```decodeInternal(BinaryBitmap image)``` - выполнение декодирования изображения всеми декодерами.
+- ```reset()``` - сброс использованных декодеров.
+
+### Описание метода ```setHints(Map<DecodeHintType,?> hints)```:
+Метод для установки hint'ов, для определения, какой из декодеров должен быть использован. В случае, если ни один из hint'ов не был установлен, то декодирование в ```decodeInternal(BinaryBitmap image)``` выполняют все декодеры. Иначе выбирается соответствующий hint'у.
+```java
   public Result decode(BinaryBitmap image, Map<DecodeHintType,?> hints) throws NotFoundException {
     setHints(hints);
     return decodeInternal(image);
@@ -294,6 +467,7 @@ public BinaryBitmap crop(int left, int top, int width, int height) {
     this.readers = readers.toArray(EMPTY_ONED_ARRAY);
   }
 ```
+По факту является тем же самым что и класс, только для 1D штрихкодов``` MultiFormatReader```
 # Для каждого 1D штрихкода прописан свой reader:
 ### Описание reader'а для CODE 39 ```Code39Reader```:
 ```java

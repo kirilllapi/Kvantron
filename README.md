@@ -120,6 +120,7 @@ LuminanceSource source = new BufferedImageLuminanceSource(image);
 ### Описание класса ```HybridBinarizer```:
 - ```calculateBlackPoints``` - рассчитывает средний порог яркости для каждого блока (ядра).
 - ```thresholdBlock``` - пременяет пороговую яркость, для пикселей меньше порога присваивается черный цвет (0), а для больших белый (1). Можно сказать, производится пороговая сегментация штрихкода от фона.
+### Описание класса ```BinaryBitmap```:
 ```java
 public BinaryBitmap crop(int left, int top, int width, int height) {
     LuminanceSource newSource = binarizer.getLuminanceSource().crop(left, top, width, height);
@@ -159,7 +160,7 @@ public BinaryBitmap crop(int left, int top, int width, int height) {
 - ```isRotateSupported()``` - проверяет на возможность переворота изображения.
 - ```rotateCounterClockwise()``` - поворачивает изображение на 90 градусов против часовой стрелки. Если исходное изображение имеет определенную ориентацию, то оно будет перевернуто на 90 градусов влево. Возвращает новый объект ```BinaryBitmap```, который содержит повернутое изображение.
 - ```rotateCounterClockwise45()``` - поворачивает изображение на 45 градусов против часовой стрелки. Также возвращает перевернутое изображение в ```BinaryBitmap```
-3. *```MultiFormatReader```* - декодер для всех видов штрихкодов, в который передается полученное бинарное изображение..
+3. *```MultiFormatReader```* - класс декодеров для всех видов штрихкодов, в который передается полученное бинарное изображение.
  ```java
  Result result = new MultiFormatReader().decode(bitmap);
 ```
